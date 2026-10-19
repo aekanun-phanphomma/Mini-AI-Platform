@@ -2,13 +2,11 @@
 # CI (.github/workflows/rag-api.yml) แก้ image.repository / image.tag ในไฟล์นี้แล้ว commit กลับมา
 # Git history ของไฟล์นี้จึงเป็นประวัติการ deploy ทั้งหมด (ADR-0018)
 image:
-  repository: rag-api
-  tag: dev
+  repository: ghcr.io/aekanun-phanphomma/rag-api
+  tag: beed5aa606fbf8424df8e75ccde31fd0193708c3
   pullPolicy: IfNotPresent
-
 autoscaling:
   enabled: false
-
 metrics:
   serviceMonitor:
     enabled: false
