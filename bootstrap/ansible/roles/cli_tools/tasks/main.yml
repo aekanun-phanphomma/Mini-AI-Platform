@@ -1,0 +1,75 @@
+---
+# Pattern: ดาวน์โหลดไฟล์ไปไว้ที่ /opt/tools/<name>-<version> แล้วสร้าง symlink /usr/local/bin/<name>
+# - idempotent: ถ้ามีไฟล์ของเวอร์ชันนั้นแล้วจะไม่ดาวน์โหลดซ้ำ
+# - อัปเกรด / rollback: แก้ version ใน group_vars แล้ว symlink จะชี้ไปเวอร์ชันใหม่
+# (ADR-0006)
+
+- name: Create tools directory
+  ansible.builtin.file:
+    path: "{{ tools_dir }}"
+    state: directory
+    mode: "0755"
+
+# ---------- single binaries ----------
+- name: Download single-binary tools
+  ansible.builtin.get_url:
+    url: "{{ item.url | replace('{V}', item.version) }}"
+    dest: "{{ tools_dir }}/{{ item.name }}-{{ item.version }}"
+    mode: "0755"
+  loop: "{{ binary_tools }}"
+  loop_control:
+    label: "{{ item.name }} {{ item.version }}"
+
+- name: Link single-binary tools into PATH
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/{{ item.name }}-{{ item.version }}"
+    dest: "/usr/local/bin/{{ item.name }}"
+    state: link
+    force: true
+  loop: "{{ binary_tools }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# ---------- archives ----------
+- name: Create versioned directories for archive tools
+  ansible.builtin.file:
+    path: "{{ tools_dir }}/{{ item.name }}-{{ item.version }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ archive_tools }}"
+  loop_control:
+    label: "{{ item.name }} {{ item.version }}"
+
+- name: Download and extract archive tools
+  ansible.builtin.unarchive:
+    src: "{{ item.url | replace('{V}', item.version) }}"
+    dest: "{{ tools_dir }}/{{ item.name }}-{{ item.version }}"
+    remote_src: true
+    creates: "{{ tools_dir }}/{{ item.name }}-{{ item.version }}/{{ item.bins[0] | replace('{V}', item.version) }}"
+  loop: "{{ archive_tools }}"
+  loop_control:
+    label: "{{ item.name }} {{ item.version }}"
+
+- name: Link archive binaries into PATH
+  ansible.builtin.file:
+    src: "{{ tools_dir }}/{{ item.0.name }}-{{ item.0.version }}/{{ item.1 | replace('{V}', item.0.version) }}"
+    dest: "/usr/local/bin/{{ item.1 | basename }}"
+    state: link
+    force: true
+  loop: "{{ archive_tools | subelements('bins') }}"
+  loop_control:
+    label: "{{ item.1 | basename }}"
+
+# ---------- shell completion ----------
+- name: Enable kubectl / helm completion and handy aliases
+  ansible.builtin.copy:
+    dest: /etc/profile.d/ai-lab.sh
+    mode: "0644"
+    content: |
+      # Managed by Ansible (Mini-AI-Platform)
+      if [ -n "$BASH_VERSION" ]; then
+        source <(kubectl completion bash)
+        source <(helm completion bash)
+        alias k=kubectl
+        complete -o default -F __start_kubectl k
+      fi

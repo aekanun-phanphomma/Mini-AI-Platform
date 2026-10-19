@@ -1,0 +1,9 @@
+{"question": "พนักงานมีวันลาพักร้อนกี่วันต่อปี", "expected_source": "leave-policy.md", "must_contain": ["10"]}
+{"question": "ลาป่วยกี่วันถึงต้องมีใบรับรองแพทย์", "expected_source": "leave-policy.md", "must_contain": ["3"]}
+{"question": "ต้องยื่นขอลาพักร้อนล่วงหน้ากี่วัน", "expected_source": "leave-policy.md", "must_contain": ["7"]}
+{"question": "รหัสผ่านต้องยาวอย่างน้อยกี่ตัวอักษร", "expected_source": "it-security.md", "must_contain": ["12"]}
+{"question": "ถ้าทำโน้ตบุ๊กบริษัทหาย ต้องแจ้งใครภายในกี่ชั่วโมง", "expected_source": "it-security.md", "must_contain": ["security"]}
+{"question": "เบี้ยเลี้ยงเดินทางในประเทศวันละเท่าไหร่", "expected_source": "expense-policy.md", "must_contain": ["500"]}
+{"question": "ค่าใช้จ่ายเกินเท่าไหร่ต้องให้ผู้อำนวยการอนุมัติ", "expected_source": "expense-policy.md", "must_contain": ["20,000"]}
+{"question": "ต้องส่งใบเสร็จเบิกค่าใช้จ่ายภายในกี่วัน", "expected_source": "expense-policy.md", "must_contain": ["30"]}
+{"question": "บริษัทอนุญาตให้นำสัตว์เลี้ยงมาที่ออฟฟิศไหม", "expected_source": null, "must_contain": ["ไม่ทราบ"]}

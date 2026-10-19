@@ -1,0 +1,6 @@
+---
+- name: Restart docker
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
+  when: ansible_facts['service_mgr'] == 'systemd'

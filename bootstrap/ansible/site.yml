@@ -1,0 +1,37 @@
+---
+# Phase 0: Workstation as Code (ADR-0005, ADR-0006)
+# รันซ้ำกี่ครั้งก็ได้ (idempotent): ถ้าเครื่องตรงกับที่ประกาศไว้แล้ว ทุก task จะขึ้น "ok" ไม่ใช่ "changed"
+- name: Provision AI platform lab workstation
+  hosts: workstation
+  become: true
+  vars:
+    lab_user: "{{ lookup('env', 'USER') }}"
+    lab_home: "/home/{{ lab_user }}"
+
+  roles:
+    - { role: base, tags: [base] }
+    - { role: docker, tags: [docker] }
+    - { role: cli_tools, tags: [tools] }
+    - { role: python_tools, tags: [python] }
+
+  post_tasks:
+    - name: Verify installed tools
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - kubectl version --client
+        - helm version --short
+        - k3d version
+        - tofu version
+        - k6 version
+        - node --version
+        - "{{ lab_home }}/.local/bin/uv --version"
+        - "{{ lab_home }}/.local/bin/dvc --version"
+      register: versions
+      changed_when: false
+      become: false
+      tags: [verify]
+
+    - name: Show versions
+      ansible.builtin.debug:
+        msg: "{{ versions.results | map(attribute='stdout_lines') | map('first') | list }}"
+      tags: [verify]

@@ -1,0 +1,49 @@
+# ตรวจ infra-as-code ทุก PR: ถ้าพังให้รู้ตั้งแต่ใน PR ไม่ใช่ตอน Argo CD sync
+name: infra-lint
+
+on:
+  pull_request:
+    paths: ["phase-3-platform/**", "gitops/**", "bootstrap/**"]
+  push:
+    branches: [main]
+    paths: ["phase-3-platform/**", "gitops/**", "bootstrap/**"]
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+      - run: helm lint phase-3-platform/charts/ai-deps
+      - run: helm lint phase-3-platform/charts/rag-api -f phase-3-platform/charts/rag-api/values-lab.yaml
+      # render ทุก feature flag ให้แน่ใจว่า template ของ Phase 4 ไม่พัง
+      - run: >
+          helm template t phase-3-platform/charts/rag-api
+          --set autoscaling.enabled=true
+          --set metrics.serviceMonitor.enabled=true
+          --set metrics.prometheusRule.enabled=true
+          --set metrics.dashboard.enabled=true > /dev/null
+
+  tofu:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: phase-3-platform/infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.5
+      - run: tofu fmt -check -recursive
+      - run: tofu init -backend=false -input=false
+      - run: tofu validate
+
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install ansible-core==2.17.6
+      - working-directory: bootstrap/ansible
+        run: ansible-playbook site.yml --syntax-check

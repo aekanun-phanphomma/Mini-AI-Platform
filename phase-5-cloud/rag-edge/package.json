@@ -1,0 +1,13 @@
+{
+  "name": "rag-edge",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --remote",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.2"
+  }
+}

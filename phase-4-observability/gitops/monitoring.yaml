@@ -1,0 +1,52 @@
+# Phase 4: `make enable` จะคัดลอกไฟล์นี้ไปไว้ใน gitops/apps/ แล้วให้ push
+# Argo CD เห็นไฟล์ใหม่ใน Git ก็ติดตั้ง Prometheus + Grafana ให้ (ADR-0019)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 65.8.1
+    helm:
+      valuesObject:
+        alertmanager:
+          enabled: false            # แล็บดู alert ใน Prometheus UI ก็พอ
+        grafana:
+          adminPassword: admin      # แล็บเท่านั้น
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hosts: [grafana.localhost]
+          sidecar:
+            dashboards:
+              searchNamespace: ALL  # หา ConfigMap dashboard จากทุก namespace (rag-api อยู่ใน ai)
+        prometheus:
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hosts: [prometheus.localhost]
+          prometheusSpec:
+            # ปกติ Prometheus เลือกเฉพาะ ServiceMonitor ที่มี label ของ release ตัวเอง
+            # ตั้งเป็น false เพื่อให้รับ ServiceMonitor / Rule จากทุก chart
+            serviceMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            retention: 3d
+            resources:
+              requests: { cpu: 100m, memory: 512Mi }
+              limits: { memory: 1536Mi }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions:
+      - CreateNamespace=true
+      # CRD ของ prometheus-operator ใหญ่เกิน limit ของ annotation last-applied (256KB)
+      # จึงต้องใช้ server-side apply
+      - ServerSideApply=true

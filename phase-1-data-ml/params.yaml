@@ -1,0 +1,23 @@
+# hyperparameter และ config ทั้งหมดอยู่ที่นี่ ไม่ hardcode ใน code
+# DVC ติดตามไฟล์นี้: ค่าเปลี่ยน → `dvc repro` จะรันใหม่เฉพาะ stage ที่ได้รับผลกระทบ
+ingest:
+  dataset: fancyzhx/ag_news   # 4 classes: World / Sports / Business / Sci/Tech
+  sample_size: 20000          # ลดขนาดให้เทรนบน CPU ได้ในไม่กี่วินาที
+  seed: 42
+
+prepare:
+  test_size: 0.2
+  min_chars: 20
+  seed: 42
+
+train:
+  max_features: 50000
+  ngram_max: 2
+  C: 4.0
+  max_iter: 1000
+  register_threshold: 0.85    # quality gate: ต่ำกว่านี้ไม่ register เข้า registry
+
+mlflow:
+  tracking_uri: http://localhost:5000
+  experiment: news-classifier
+  model_name: news-classifier

@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rag-api
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: REPO_URL
+    targetRevision: main
+    path: phase-3-platform/charts/rag-api
+    helm:
+      valueFiles:
+        - values-lab.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ai
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions:
+      - CreateNamespace=true
+  # HPA เป็นตัวปรับ replicas ไม่ต้องให้ Argo แจ้งว่า OutOfSync
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers: [/spec/replicas]

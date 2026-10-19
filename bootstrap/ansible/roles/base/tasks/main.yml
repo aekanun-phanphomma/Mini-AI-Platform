@@ -1,0 +1,43 @@
+---
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - ca-certificates
+      - curl
+      - git
+      - gnupg
+      - jq
+      - make
+      - unzip
+      - xz-utils
+      - python3-venv
+      - bash-completion
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+# systemd จำเป็นต่อการให้ docker daemon start อัตโนมัติ
+# ใน WSL ต้องเปิดผ่าน /etc/wsl.conf แล้ว `wsl --shutdown` หนึ่งครั้ง
+# เงื่อนไข `when` ทำให้ playbook นี้ใช้กับ Ubuntu VM ปกติได้ด้วย
+- name: Enable systemd in WSL
+  ansible.builtin.copy:
+    dest: /etc/wsl.conf
+    mode: "0644"
+    content: |
+      # Managed by Ansible (Mini-AI-Platform)
+      [boot]
+      systemd=true
+
+      [user]
+      default={{ lab_user }}
+
+      [interop]
+      appendWindowsPath=false
+  when: "'microsoft' in ansible_facts['kernel'] | lower"
+  register: wsl_conf
+
+- name: Remind to restart WSL
+  ansible.builtin.debug:
+    msg: "wsl.conf เปลี่ยน: รัน `wsl --shutdown` ใน PowerShell แล้วเปิด Ubuntu ใหม่"
+  when: wsl_conf is changed

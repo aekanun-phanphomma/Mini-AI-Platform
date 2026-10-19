@@ -1,0 +1,2 @@
+# cp terraform.tfvars.example terraform.tfvars  (หรือใช้ `make set-repo REPO=...`)
+repo_url = "https://github.com/aekanun-phanphomma/Mini-AI-Platform.git"

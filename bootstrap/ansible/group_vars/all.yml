@@ -1,0 +1,56 @@
+---
+# เวอร์ชันของเครื่องมือทั้งหมดอยู่ที่ไฟล์นี้ที่เดียว (ADR-0006)
+# อัปเกรด: แก้ version แล้วรัน ./bootstrap/bootstrap.sh --tags tools
+# ไฟล์ของเวอร์ชันเก่ายังอยู่ใน /opt/tools จึงย้อนกลับได้โดยแก้เลขกลับแล้วรันใหม่
+# `{V}` ใน url จะถูกแทนด้วย version
+
+tools_dir: /opt/tools
+arch: amd64
+
+# เครื่องมือที่เป็นไฟล์ binary ไฟล์เดียว
+binary_tools:
+  - name: kubectl
+    version: "1.31.2"
+    url: "https://dl.k8s.io/release/v{V}/bin/linux/amd64/kubectl"
+  - name: k3d
+    version: "5.7.4"
+    url: "https://github.com/k3d-io/k3d/releases/download/v{V}/k3d-linux-amd64"
+  - name: argocd
+    version: "2.13.0"
+    url: "https://github.com/argoproj/argo-cd/releases/download/v{V}/argocd-linux-amd64"
+  - name: yq
+    version: "4.44.3"
+    url: "https://github.com/mikefarah/yq/releases/download/v{V}/yq_linux_amd64"
+
+# เครื่องมือที่มาเป็น archive: `bins` = path ของ binary ใน archive ที่จะ link เข้า PATH
+archive_tools:
+  - name: helm
+    version: "3.16.2"
+    url: "https://get.helm.sh/helm-v{V}-linux-amd64.tar.gz"
+    bins: ["linux-amd64/helm"]
+  - name: tofu
+    version: "1.8.5"
+    url: "https://github.com/opentofu/opentofu/releases/download/v{V}/tofu_{V}_linux_amd64.zip"
+    bins: ["tofu"]
+  - name: k9s
+    version: "0.32.5"
+    url: "https://github.com/derailed/k9s/releases/download/v{V}/k9s_Linux_amd64.tar.gz"
+    bins: ["k9s"]
+  - name: k6
+    version: "0.54.0"
+    url: "https://github.com/grafana/k6/releases/download/v{V}/k6-v{V}-linux-amd64.tar.gz"
+    bins: ["k6-v{V}-linux-amd64/k6"]
+  - name: node
+    version: "22.11.0"
+    url: "https://nodejs.org/dist/v{V}/node-v{V}-linux-x64.tar.xz"
+    bins:
+      - "node-v{V}-linux-x64/bin/node"
+      - "node-v{V}-linux-x64/bin/npm"
+      - "node-v{V}-linux-x64/bin/npx"
+
+# Python tooling (ADR-0007): uv ติดตั้งระดับ user แล้ว CLI อื่นติดตั้งผ่าน `uv tool`
+uv_version: "0.5.4"
+uv_tools:
+  - { spec: "dvc[s3]==3.56.0", bin: dvc }
+  - { spec: "ruff==0.7.4", bin: ruff }
+  - { spec: "pre-commit==4.0.1", bin: pre-commit }

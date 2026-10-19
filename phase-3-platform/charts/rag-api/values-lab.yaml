@@ -1,0 +1,18 @@
+# values ของ environment "lab" ที่ Argo CD ใช้ deploy
+# CI (.github/workflows/rag-api.yml) แก้ image.repository / image.tag ในไฟล์นี้แล้ว commit กลับมา
+# Git history ของไฟล์นี้จึงเป็นประวัติการ deploy ทั้งหมด (ADR-0018)
+image:
+  repository: rag-api
+  tag: dev
+  pullPolicy: IfNotPresent
+
+autoscaling:
+  enabled: false
+
+metrics:
+  serviceMonitor:
+    enabled: false
+  prometheusRule:
+    enabled: false
+  dashboard:
+    enabled: false

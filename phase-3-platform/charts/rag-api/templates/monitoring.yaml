@@ -1,0 +1,64 @@
+{{- /* Phase 4: ต้องติดตั้ง kube-prometheus-stack ก่อน (มี CRD ServiceMonitor / PrometheusRule) */ -}}
+{{- if .Values.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{- include "rag-api.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels: {{- include "rag-api.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.metrics.serviceMonitor.interval }}
+{{- end }}
+{{- if .Values.metrics.prometheusRule.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{- include "rag-api.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: rag-api.slo
+      rules:
+        - alert: RagApiHighErrorRate
+          expr: |
+            sum(rate(rag_requests_total{status="error"}[5m]))
+              / clamp_min(sum(rate(rag_requests_total[5m])), 1e-9) > 0.05
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "rag-api error rate > 5%"
+        - alert: RagApiSlowAnswers
+          expr: |
+            histogram_quantile(0.95, sum by (le) (rate(rag_stage_seconds_bucket{stage="total"}[5m]))) > 30
+          for: 10m
+          labels: { severity: warning }
+          annotations:
+            summary: "rag-api p95 latency > 30s"
+        - alert: RagRetrievalQualityDrop
+          expr: |
+            histogram_quantile(0.5, sum by (le) (rate(rag_retrieval_top_score_bucket[30m]))) < 0.4
+          for: 30m
+          labels: { severity: info }
+          annotations:
+            summary: "คะแนน retrieval ตกลง: คำถามของผู้ใช้อาจไม่ตรงกับเอกสารที่มี"
+{{- end }}
+{{- if .Values.metrics.dashboard.enabled }}
+---
+# Grafana sidecar โหลด ConfigMap ที่มี label grafana_dashboard=1 เป็น dashboard อัตโนมัติ
+# จึงเรียกได้ว่าเป็น dashboard-as-code
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-dashboard
+  labels:
+    grafana_dashboard: "1"
+    {{- include "rag-api.labels" . | nindent 4 }}
+data:
+  rag-api.json: |-
+{{ .Files.Get "dashboards/rag-api.json" | indent 4 }}
+{{- end }}

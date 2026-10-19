@@ -1,0 +1,17 @@
+[project]
+name = "phase1-data-ml"
+version = "0.1.0"
+description = "Data pipeline + baseline classifier (DVC + MLflow)"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "datasets>=3.0",
+    "pandas>=2.2",
+    "pyarrow>=17",
+    "pyyaml>=6",
+    "scikit-learn>=1.5",
+    "mlflow==2.17.2", # ต้องตรงกับเวอร์ชันของ server (mlflow/Dockerfile)
+]
+
+[tool.uv]
+# ไม่ได้ build เป็น package แค่ใช้ uv จัดการ venv + lockfile
+package = false

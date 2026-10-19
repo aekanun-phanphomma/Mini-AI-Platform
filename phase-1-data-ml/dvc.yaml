@@ -1,0 +1,38 @@
+# DVC pipeline = DAG ของ stage ที่มี input/output ชัดเจน (ADR-0008)
+# `dvc repro` คำนวณ hash ของ deps/params ถ้าไม่เปลี่ยนก็ข้าม stage นั้น (เหมือน make แต่ใช้ content hash)
+# `dvc dag` แสดงกราฟของ pipeline
+stages:
+  ingest:
+    cmd: uv run python src/ingest.py
+    deps:
+      - src/ingest.py
+    params:
+      - ingest
+    outs:
+      - data/raw/news.parquet
+
+  prepare:
+    cmd: uv run python src/prepare.py
+    deps:
+      - src/prepare.py
+      - data/raw/news.parquet
+    params:
+      - prepare
+    outs:
+      - data/processed/train.parquet
+      - data/processed/test.parquet
+
+  train:
+    cmd: uv run python src/train.py
+    deps:
+      - src/train.py
+      - data/processed/train.parquet
+      - data/processed/test.parquet
+    params:
+      - train
+      - mlflow
+    outs:
+      - models/model.pkl
+    metrics:
+      - metrics.json:
+          cache: false   # metrics เก็บใน git จะได้ `dvc metrics diff` ข้าม commit ได้

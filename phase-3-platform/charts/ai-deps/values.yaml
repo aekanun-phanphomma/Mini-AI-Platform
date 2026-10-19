@@ -1,0 +1,21 @@
+ollama:
+  image: ollama/ollama:0.6.5
+  # Job (helm hook) จะ pull โมเดลเหล่านี้หลัง install / upgrade
+  models:
+    - qwen2.5:1.5b
+    - bge-m3
+  keepAlive: 30m
+  storage: 15Gi
+  # ไม่ตั้ง CPU limit เพราะ LLM inference ใช้ CPU ทุก core ที่มี
+  # ถ้าตั้ง limit จะโดน throttle และ latency แย่ลงมาก (ADR-0016)
+  # ตั้ง memory limit เสมอ เพราะถ้าใช้ memory เกินจะโดน OOMKill แค่ pod นี้ ไม่ลามไปทั้ง node
+  resources:
+    requests: { cpu: "1", memory: 3Gi }
+    limits: { memory: 6Gi }
+
+qdrant:
+  image: qdrant/qdrant:v1.12.4
+  storage: 2Gi
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }

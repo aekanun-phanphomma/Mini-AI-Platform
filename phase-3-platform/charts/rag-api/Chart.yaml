@@ -1,0 +1,6 @@
+apiVersion: v2
+name: rag-api
+description: Stateless RAG API (apps/rag-api). See ADR-0013, ADR-0016.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

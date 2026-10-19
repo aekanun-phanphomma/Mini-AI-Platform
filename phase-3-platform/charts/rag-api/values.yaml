@@ -1,0 +1,43 @@
+# ค่า default ของ chart เป็นค่ากลาง ค่าเฉพาะ environment ให้ override ใน values-<env>.yaml
+replicaCount: 1
+
+image:
+  repository: rag-api
+  tag: dev
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+env:
+  OLLAMA_URL: http://ollama:11434     # Service ของ chart ai-deps (namespace เดียวกัน)
+  QDRANT_URL: http://qdrant:6333
+  CHAT_MODEL: qwen2.5:1.5b
+  EMBED_MODEL: bge-m3
+
+service:
+  port: 80
+
+ingress:
+  enabled: true
+  className: traefik
+  host: rag.localhost
+
+resources:
+  requests: { cpu: 100m, memory: 192Mi }
+  limits: { memory: 512Mi }
+
+# Phase 4
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 60
+
+metrics:
+  serviceMonitor:
+    enabled: false
+    interval: 15s
+  prometheusRule:
+    enabled: false
+  dashboard:
+    enabled: false

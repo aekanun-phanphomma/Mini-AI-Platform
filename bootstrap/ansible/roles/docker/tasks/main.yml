@@ -1,0 +1,59 @@
+---
+# Docker Engine จาก repo ทางการของ Docker ติดตั้งใน WSL โดยตรง ไม่ใช้ Docker Desktop (ADR-0004)
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Add Docker GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Add Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ arch }} signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu {{ ansible_facts['distribution_release'] }} stable
+    filename: docker
+    state: present
+
+- name: Install Docker Engine + plugins
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+# ถ้าไม่จำกัดขนาด log ของ container (json-file) จะโตไม่หยุด จน disk ของ WSL เต็ม
+- name: Configure Docker daemon (log rotation)
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "10m", "max-file": "3" }
+      }
+  notify: Restart docker
+
+# อยู่ใน docker group = ใช้ docker ได้โดยไม่ต้อง sudo
+# ข้อควรรู้: สิทธิ์นี้เทียบเท่า root บนเครื่อง ยอมรับได้สำหรับเครื่อง dev
+- name: Add user to docker group
+  ansible.builtin.user:
+    name: "{{ lab_user }}"
+    groups: docker
+    append: true
+
+- name: Enable and start Docker (requires systemd)
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+  when: ansible_facts['service_mgr'] == 'systemd'

@@ -1,0 +1,30 @@
+---
+# ติดตั้งระดับ user (~/.local/bin) ไม่ใช่ระดับระบบ (ADR-0007)
+# เพราะ Ubuntu 24.04 ห้าม `pip install` ลง system Python (PEP 668)
+# และเครื่องมือของ user ไม่ควรต้องใช้สิทธิ์ root
+
+- name: Install uv
+  ansible.builtin.shell:
+    cmd: "set -o pipefail && curl -LsSf https://astral.sh/uv/{{ uv_version }}/install.sh | sh"
+    executable: /bin/bash
+    creates: "{{ lab_home }}/.local/bin/uv"
+  become: false
+  environment:
+    UV_NO_MODIFY_PATH: "1"
+
+- name: Install CLI tools with `uv tool` (each gets its own isolated venv)
+  ansible.builtin.command:
+    cmd: "{{ lab_home }}/.local/bin/uv tool install '{{ item.spec }}'"
+    creates: "{{ lab_home }}/.local/bin/{{ item.bin }}"
+  loop: "{{ uv_tools }}"
+  loop_control:
+    label: "{{ item.spec }}"
+  become: false
+
+- name: Put ~/.local/bin on PATH
+  ansible.builtin.lineinfile:
+    path: "{{ lab_home }}/.bashrc"
+    line: 'export PATH="$HOME/.local/bin:$PATH"'
+    create: true
+    mode: "0644"
+  become: false

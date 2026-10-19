@@ -1,0 +1,21 @@
+# Argo CD สำหรับแล็บ: ตัด component ที่ยังไม่ใช้ออกเพื่อประหยัด RAM
+configs:
+  params:
+    # ให้ Traefik รับ HTTP แล้วส่งต่อแบบ plain (แล็บไม่มี TLS)
+    # งานจริงต้องใช้ TLS + cert-manager
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hostname: argocd.localhost
+
+dex:
+  enabled: false          # ไม่ใช้ SSO ในแล็บ
+
+notifications:
+  enabled: false
+
+applicationSet:
+  replicas: 1

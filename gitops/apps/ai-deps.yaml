@@ -1,0 +1,22 @@
+# ไฟล์ในโฟลเดอร์นี้คือ "สิ่งที่ควรรันอยู่ใน cluster"
+# เพิ่มไฟล์ = deploy, ลบไฟล์ = undeploy, แก้ไฟล์ = เปลี่ยน config แล้ว push เข้า main (ADR-0017)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ai-deps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # ลบ Application แล้วลบ resource ใน cluster ตามไปด้วย
+spec:
+  project: default
+  source:
+    repoURL: REPO_URL
+    targetRevision: main
+    path: phase-3-platform/charts/ai-deps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ai
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions:
+      - CreateNamespace=true

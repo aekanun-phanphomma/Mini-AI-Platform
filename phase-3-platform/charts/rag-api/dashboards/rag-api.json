@@ -1,0 +1,59 @@
+{
+  "uid": "rag-api",
+  "title": "RAG API",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Requests / sec by status",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum by (endpoint, status) (rate(rag_requests_total[1m]))", "legendFormat": "{{endpoint}} {{status}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 latency by stage (s)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (le, stage) (rate(rag_stage_seconds_bucket[5m])))", "legendFormat": "{{stage}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM tokens / sec",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum by (kind) (rate(rag_llm_tokens_total[1m]))", "legendFormat": "{{kind}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Retrieval top score (p50) — quality proxy",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 1 } },
+      "targets": [
+        { "expr": "histogram_quantile(0.5, sum by (le) (rate(rag_retrieval_top_score_bucket[5m])))", "legendFormat": "p50 top score" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "rag-api replicas (HPA) vs CPU",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "kube_deployment_status_replicas{deployment=\"rag-api\"}", "legendFormat": "replicas" },
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"ai\", container=\"rag-api\"}[1m]))", "legendFormat": "rag-api CPU cores" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Ollama CPU (the real bottleneck?)",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"ai\", container=\"ollama\"}[1m]))", "legendFormat": "ollama CPU cores" }
+      ]
+    }
+  ]
+}

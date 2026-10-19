@@ -1,0 +1,21 @@
+# k3d = k3s (Kubernetes ขนาดเล็ก) ที่รันอยู่ใน Docker container (ADR-0015)
+# สร้าง: k3d cluster create --config k3d/cluster.yaml
+# ลบ:   k3d cluster delete ailab   ← เพราะทุกอย่างเป็น code จะสร้างใหม่เมื่อไหร่ก็ได้
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: ailab
+servers: 1
+agents: 1          # 1 control-plane + 1 worker: พอให้เห็นการ schedule ข้าม node โดยไม่กิน RAM มาก
+image: rancher/k3s:v1.31.2-k3s1   # pin ให้ตรงกับ kubectl (เวอร์ชันห่างกันได้ไม่เกิน ±1 minor)
+ports:
+  # k3s มี Traefik เป็น ingress controller อยู่แล้ว
+  # localhost:8080 → load balancer → Traefik → Ingress → Service → Pod
+  - port: 8080:80
+    nodeFilters: [loadbalancer]
+options:
+  k3d:
+    wait: true
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true   # context ชื่อ k3d-ailab

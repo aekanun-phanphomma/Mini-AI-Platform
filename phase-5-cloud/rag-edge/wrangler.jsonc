@@ -1,0 +1,21 @@
+// RAG เวอร์ชัน serverless บน Cloudflare (ADR-0023)
+// API เดียวกับ apps/rag-api (/ingest, /ask) จึงใช้ eval set ชุดเดียวกันเทียบผลได้
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rag-edge",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+
+  "ai": { "binding": "AI" },
+  "vectorize": [{ "binding": "VECTORIZE", "index_name": "rag-docs" }],
+
+  // โมเดลอยู่ใน config ไม่ hardcode ใน code: ดูรายชื่อที่ใช้ได้ด้วย `npx wrangler ai models`
+  // EMBED_MODEL ต้องให้ dimension ตรงกับ Vectorize index (bge-m3 = 1024)
+  "vars": {
+    "EMBED_MODEL": "@cf/baai/bge-m3",
+    "CHAT_MODEL": "@cf/meta/llama-3.1-8b-instruct",
+    "TOP_K": "4"
+  }
+  // INGEST_TOKEN เป็น secret: `npx wrangler secret put INGEST_TOKEN` (ห้ามใส่ใน vars)
+}

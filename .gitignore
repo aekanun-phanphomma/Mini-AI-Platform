@@ -218,3 +218,31 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---- Mini-AI-Platform ----
+# secrets / local config (ADR-0024)
+.env
+.dev.vars
+.ingest-token
+phase-3-platform/infra/terraform.tfvars.local
+*.auto.tfvars.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# OpenTofu: state เก็บ local ในแล็บ ห้าม commit (มี secret ได้)
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Node / Cloudflare
+node_modules/
+.wrangler/
+
+# Outputs
+phase-2-llm-rag/eval/results.json
+phase-4-observability/drift/drift_report.json

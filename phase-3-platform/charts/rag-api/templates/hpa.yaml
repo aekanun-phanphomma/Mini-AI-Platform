@@ -1,0 +1,25 @@
+{{- if .Values.autoscaling.enabled }}
+# HPA อ่านค่า CPU จาก metrics-server (k3s มีให้แล้ว) ADR-0022
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{- include "rag-api.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 120   # ไม่ scale down ทันที ป้องกันจำนวน pod แกว่งขึ้นลง
+{{- end }}
